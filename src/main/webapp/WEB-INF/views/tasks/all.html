@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" rel="stylesheet">
+    <script th:src="@{webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+    <title>Tasks</title>
+</head>
+<body>
+
+<div class="container mt-3">
+    <table class="table" id="tasksTable">
+        <thead class="table-dark">
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Description</th>
+            <th scope="col">Status</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="task : ${tasks}" th:data-task-id="${task.id}">
+            <th scope="row" th:text="${task.id}">1</th>
+            <td>
+                <span th:text="${task.description}">Task Description</span>
+                <input type="text" class="form-control d-none" value="Task Description">
+            </td>
+            <td>
+                <span th:text="${task.status}">Status</span>
+                <select class="form-control d-none">
+                    <option>DONE</option>
+                    <option>PAUSED</option>
+                    <option>IN PROGRESS</option>
+                </select>
+            </td>
+            <td>
+                <button class="btn btn-primary btn-sm edit-btn">Edit</button>
+                <button class="btn btn-success btn-sm save-btn d-none">Save</button>
+                <button class="btn btn-danger btn-sm delete-btn">Delete</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <form th:action="@{/tasks}" method="post" class="row g-3">
+        <div class="col-auto">
+            <input type="text" class="form-control" id="description" name="description" placeholder="Task Description">
+        </div>
+        <div class="col-auto">
+            <select class="form-control" id="status" name="status">
+                <option>DONE</option>
+                <option>PAUSED</option>
+                <option>IN PROGRESS</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-success">Save</button>
+        </div>
+    </form>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination">
+            <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+            <li class="page-item"><a class="page-link" href="?page=2">2</a></li>
+        </ul>
+    </nav>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const table = document.getElementById('tasksTable');
+
+        table.addEventListener('click', function (e) {
+            if (e.target.classList.contains('edit-btn')) {
+                const tr = e.target.closest('tr');
+                const description = tr.querySelector('td:nth-child(2) span');
+                const descriptionInput = tr.querySelector('td:nth-child(2) input');
+                const status = tr.querySelector('td:nth-child(3) span');
+                const statusSelect = tr.querySelector('td:nth-child(3) select');
+                const editBtn = tr.querySelector('.edit-btn');
+                const saveBtn = tr.querySelector('.save-btn');
+                description.classList.toggle('d-none');
+                descriptionInput.classList.toggle('d-none');
+                status.classList.toggle('d-none');
+                statusSelect.classList.toggle('d-none');
+                editBtn.classList.toggle('d-none');
+                saveBtn.classList.toggle('d-none');
+            }
+
+            if (e.target.classList.contains('save-btn')) {
+                const tr = e.target.closest('tr');
+                const id = tr.dataset.taskId;
+                const descriptionInput = tr.querySelector('td:nth-child(2) input').value;
+                const statusSelect = tr.querySelector('td:nth-child(3) select').value;
+                const taskData = {
+                    id: id,
+                    description: descriptionInput,
+                    status: statusSelect
+                };
+
+                fetch('/tasks', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(taskData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Success:', data);
+                        const description = tr.querySelector('td:nth-child(2) span');
+                        const status = tr.querySelector('td:nth-child(3) span');
+                        const editBtn = tr.querySelector('.edit-btn');
+                        const saveBtn = tr.querySelector('.save-btn');
+
+                        description.textContent = descriptionInput;
+                        status.textContent = statusSelect;
+
+                        description.classList.toggle('d-none');
+                        descriptionInput.classList.toggle('d-none');
+                        status.classList.toggle('d-none');
+                        statusSelect.classList.toggle('d-none');
+                        editBtn.classList.toggle('d-none');
+                        saveBtn.classList.toggle('d-none');
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            }
+        });
+    });
+</script>
+</body>
+</html>
